@@ -1,0 +1,14 @@
+# A checkout on Windows would otherwise give build-ipa.sh CRLF endings, and
+# bash fails on a shebang line that has been rewritten.
+*.sh text eol=lf
+
+# Keep PowerShell native to Windows.
+*.ps1 text eol=crlf
+
+# Source that should not pick up CRLF if this repo is ever built on Windows.
+*.swift text eol=lf
+*.yml text eol=lf
+*.json text eol=lf
+*.storyboard text eol=lf
+
+*.png binary

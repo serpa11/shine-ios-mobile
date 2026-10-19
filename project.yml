@@ -1,0 +1,69 @@
+name: Shine
+
+options:
+  bundleIdPrefix: com.shine
+  deploymentTarget:
+    iOS: "16.0"
+  createIntermediateGroups: true
+  groupSortPosition: top
+
+settings:
+  base:
+    SWIFT_VERSION: "5.9"
+    MARKETING_VERSION: "1.0.0"
+    CURRENT_PROJECT_VERSION: "1"
+    CODE_SIGN_STYLE: Automatic
+    # The site is plain HTTPS, so no App Transport Security exception is needed
+    # and none is declared. Shine talks to its providers straight from the
+    # web view, so there is no native networking layer to configure.
+    ENABLE_USER_SCRIPT_SANDBOXING: YES
+    SWIFT_TREAT_WARNINGS_AS_ERRORS: NO
+
+targets:
+  Shine:
+    type: application
+    platform: iOS
+    deploymentTarget: "16.0"
+    sources:
+      - path: Shine
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.shine.mobile
+        PRODUCT_NAME: Shine
+        MARKETING_VERSION: "1.0.0"
+        CURRENT_PROJECT_VERSION: "1"
+        TARGETED_DEVICE_FAMILY: "1,2"
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+        SUPPORTS_MACCATALYST: NO
+        SUPPORTS_XR_DESIGNED_FOR_IPHONE: NO
+        INFOPLIST_KEY_UIStatusBarStyle: UIStatusBarStyleDefault
+
+    # XcodeGen writes Shine/Info.plist from this block, so there is exactly one
+    # place that decides what the app is allowed to ask the user for.
+    info:
+      path: Shine/Info.plist
+      properties:
+        CFBundleDisplayName: Shine
+        CFBundleName: Shine
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        UILaunchStoryboardName: LaunchScreen
+        ITSAppUsesNonExemptEncryption: false
+        UIApplicationSupportsIndirectInputEvents: true
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+        UISupportedInterfaceOrientations~ipad:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationPortraitUpsideDown
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+        # Shine Live records from the microphone, and attachments can be
+        # photos. The site asks for these itself over getUserMedia; iOS requires
+        # the usage strings to be present or the prompt never appears.
+        NSMicrophoneUsageDescription: >-
+          Shine uses the microphone so you can talk to it during Shine Live.
+        NSCameraUsageDescription: >-
+          Shine uses the camera so you can take a photo to attach to a message.
+        NSPhotoLibraryUsageDescription: >-
+          Shine needs access to your photos so you can attach one to a message.
