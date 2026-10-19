@@ -1,0 +1,66 @@
+name: Build IPA
+
+# Runs on a cloud Mac, so you never need one. The build is deliberately
+# UNSIGNED: Apple refuses to sign anything without a Team ID, and an unsigned
+# IPA is still installable by re-signing it with your own Apple ID through
+# Sideloadly / AltStore on Windows.
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: macos-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate Xcode project
+        run: xcodegen generate
+
+      - name: Compile for iOS (unsigned)
+        run: |
+          set -euo pipefail
+          xcodebuild \
+            -project Shine.xcodeproj \
+            -scheme Shine \
+            -configuration Release \
+            -sdk iphoneos \
+            -destination 'generic/platform=iOS' \
+            -derivedDataPath build/DerivedData \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO \
+            build
+
+      - name: Package as IPA
+        run: |
+          set -euo pipefail
+          APP=$(find build/DerivedData/Build/Products/Release-iphoneos -maxdepth 1 -name '*.app' | head -1)
+          if [ -z "$APP" ]; then
+            echo "No .app was produced - check the build step above." >&2
+            exit 1
+          fi
+          echo "Packaging $APP"
+          mkdir -p build/Payload
+          cp -R "$APP" build/Payload/
+          cd build
+          zip -qry "$GITHUB_WORKSPACE/Shine-unsigned.ipa" Payload
+          cd "$GITHUB_WORKSPACE"
+
+      - name: Sanity check
+        run: |
+          set -euo pipefail
+          unzip -l Shine-unsigned.ipa | head -30
+          # The bundle must carry a real Mach-O executable, or the IPA is useless.
+          unzip -p Shine-unsigned.ipa Payload/Shine/Shine | file -
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Shine-unsigned-ipa
+          path: Shine-unsigned.ipa
+          if-no-files-found: error

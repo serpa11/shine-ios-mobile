@@ -46,10 +46,27 @@ METHOD=app-store  ./scripts/build-ipa.sh   # for TestFlight / App Store Connect
 The first `-allowProvisioningUpdates` build needs network access to Apple's
 developer portal and will create the App ID and provisioning profile for you.
 
-### No Mac?
+### No Mac at all
 
-Any cloud Mac will do - a GitHub Actions `macos-latest` runner is the usual
-answer. Nothing about this project is machine specific.
+The included workflow builds on a cloud Mac, so you never need one:
+
+```bash
+git remote add origin git@github.com:<you>/shine-ios.git
+git push -u origin main
+```
+
+Then Actions -> Build IPA -> Run workflow, and download `Shine-unsigned-ipa`
+from the run summary.
+
+That artifact is **unsigned**, because Apple will not sign without a Team ID.
+It still installs, via re-signing with your own Apple ID:
+
+- **Sideloadly** (Windows/Mac) - drag the IPA in, sign in with a free Apple ID,
+  done. No developer membership needed.
+- **AltStore** - sideload from the IPA in its own UI.
+
+Free Apple IDs give 7-day profiles and a limit of 3 sideloaded apps. Paid
+membership removes both limits and unlocks TestFlight.
 
 ### Running in Xcode
 
