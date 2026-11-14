@@ -7,7 +7,6 @@ struct ContentView: View {
     var body: some View {
         ZStack(alignment: .bottom) {
             ShineWebView(isRefreshing: $isRefreshing, loadError: $loadError)
-                .ignoresSafeArea()
                 .background(Color.black)
 
             if let loadError {
@@ -19,6 +18,11 @@ struct ContentView: View {
         }
         .background(Color.black)
         .animation(.easeInOut(duration: 0.2), value: loadError)
+        // The system status bar is the strip of clock, battery and signal at the
+        // top. It recolours itself against whatever the site is showing behind
+        // it, which is the tell that gives this away as a web page. Hiding it
+        // lets the site run edge to edge like a native app.
+        .statusBarHidden(true)
     }
 }
 

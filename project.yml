@@ -51,6 +51,9 @@ targets:
         UILaunchStoryboardName: LaunchScreen
         ITSAppUsesNonExemptEncryption: false
         UIApplicationSupportsIndirectInputEvents: true
+        # SwiftUI's .statusBarHidden(_:) drives the bar through the hosting
+        # controller, which only takes effect when this is explicitly YES.
+        UIViewControllerBasedStatusBarAppearance: true
         UISupportedInterfaceOrientations:
           - UIInterfaceOrientationPortrait
         UISupportedInterfaceOrientations~ipad:

@@ -47,14 +47,13 @@ struct ShineWebView: UIViewRepresentable {
         // navigation callbacks own the spinner's lifecycle instead.
     }
 
-    final class Coordinator: NSObject, WKNavigationDelegate, WKUIDelegate, WKDownloadDelegate, UIDocumentPickerDelegate {
+    final class Coordinator: NSObject, WKNavigationDelegate, WKUIDelegate, WKDownloadDelegate {
         var parent: ShineWebView
         private(set) var refreshControl = UIRefreshControl()
         private weak var webView: WKWebView?
 
-        /// Held for the lifetime of an in-flight file chooser, since the
-        /// completion handler has to survive the picker's own dismissal.
-        private var pendingUpload: (([URL]?) -> Void)?
+        /// The live picker, kept alive for as long as it is on screen.
+        private var attachmentPicker: AttachmentPicker?
 
         /// Where each in-flight download is being written. WKDownload never hands
         /// the finished file back, so the path chosen up front is recorded here.
@@ -253,10 +252,12 @@ struct ShineWebView: UIViewRepresentable {
         // MARK: - Attachments
 
         // Without this, the site's attachment chip does nothing at all: tapping
-        // it would open a file input that no picker is ever shown for.
+        // it would open a file input that no picker is ever shown for. The
+        // picker also offers the camera for image inputs, which a plain
+        // document picker cannot reach.
         func webView(_ webView: WKWebView, runOpenPanelWith parameters: WKOpenPanelParameters,
                      initiatedByFrame frame: WKFrameInfo, completionHandler: @escaping ([URL]?) -> Void) {
-            guard pendingUpload == nil else {
+            guard let presenter = UIViewController.topMost else {
                 completionHandler(nil)
                 return
             }
@@ -265,21 +266,30 @@ struct ShineWebView: UIViewRepresentable {
                 ? [UTType.item]
                 : parameters.acceptedContentTypes
 
-            let picker = UIDocumentPickerViewController(forOpeningContentTypes: types, asCopy: false)
-            picker.allowsMultipleSelection = parameters.allowsMultipleSelection
-            picker.delegate = self
-            pendingUpload = completionHandler
-            UIViewController.topMost?.present(picker, animated: true)
+            let picker = AttachmentPicker()
+            attachmentPicker = picker
+            picker.present(
+                from: presenter,
+                types: types,
+                allowsMultiple: parameters.allowsMultipleSelection
+            ) { [weak self] urls in
+                self?.attachmentPicker = nil
+                completionHandler(urls)
+            }
         }
 
-        func documentPicker(_ controller: UIDocumentPickerViewController, didPickDocumentsAt urls: [URL]) {
-            pendingUpload?(urls)
-            pendingUpload = nil
-        }
+        // MARK: - Microphone and camera
 
-        func documentPickerWasCancelled(_ controller: UIDocumentPickerViewController) {
-            pendingUpload?(nil)
-            pendingUpload = nil
+        // This is what makes Shine Live work. Without it, getUserMedia() is
+        // refused outright and the site gets no microphone and no camera - the
+        // usage strings in Info.plist alone are never enough. Granting here is
+        // what causes iOS to raise the real system permission prompt.
+        func webView(_ webView: WKWebView,
+                     requestMediaCapturePermissionForOrigin origin: WKSecurityOrigin,
+                     initiatedByFrame frame: WKFrameInfo,
+                     type: WKMediaCaptureType,
+                     decisionHandler: @escaping (WKPermissionDecision) -> Void) {
+            decisionHandler(.grant)
         }
     }
 }
