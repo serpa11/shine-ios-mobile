@@ -55,9 +55,24 @@ jobs:
       - name: Sanity check
         run: |
           set -euo pipefail
-          unzip -l Shine-unsigned.ipa | head -30
-          # The bundle must carry a real Mach-O executable, or the IPA is useless.
-          unzip -p Shine-unsigned.ipa Payload/Shine/Shine | file -
+          unzip -l Shine-unsigned.ipa
+
+          # Locate the bundle executable rather than hardcoding the path: the
+          # .app name comes from the target and could change.
+          BIN=$(unzip -l Shine-unsigned.ipa | awk '/\.app\/[^/]+$/ {print $4; exit}')
+          if [ -z "$BIN" ]; then
+            echo "Could not find a bundle executable in the IPA." >&2
+            exit 1
+          fi
+          echo "bundle executable: $BIN"
+
+          # The IPA is useless without a real Mach-O binary inside.
+          DESC=$(unzip -p Shine-unsigned.ipa "$BIN" | file -)
+          echo "$DESC"
+          case "$DESC" in
+            *Mach-O*) ;;
+            *) echo "$BIN is not a Mach-O binary." >&2; exit 1 ;;
+          esac
 
       - uses: actions/upload-artifact@v4
         with:
