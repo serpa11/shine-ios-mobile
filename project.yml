@@ -37,7 +37,6 @@ targets:
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
         SUPPORTS_MACCATALYST: NO
         SUPPORTS_XR_DESIGNED_FOR_IPHONE: NO
-        INFOPLIST_KEY_UIStatusBarStyle: UIStatusBarStyleDefault
 
     # XcodeGen writes Shine/Info.plist from this block, so there is exactly one
     # place that decides what the app is allowed to ask the user for.
@@ -51,6 +50,13 @@ targets:
         UILaunchStoryboardName: LaunchScreen
         ITSAppUsesNonExemptEncryption: false
         UIApplicationSupportsIndirectInputEvents: true
+        # The status bar is drawn over the web content, which runs edge to edge,
+        # so it has no background of its own and the site's chat background shows
+        # straight through it. Nothing hides it. The style follows the system
+        # appearance so the clock and battery stay legible over both the dark
+        # and the light background.
+        UIStatusBarStyle: UIStatusBarStyleDefault
+        UIViewControllerBasedStatusBarAppearance: false
         UISupportedInterfaceOrientations:
           - UIInterfaceOrientationPortrait
         UISupportedInterfaceOrientations~ipad:
