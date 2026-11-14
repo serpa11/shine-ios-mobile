@@ -108,17 +108,19 @@ different host. Worth settling on one before shipping both.
   localStorage, kept by the default persistent `WKWebsiteDataStore`.
 - **Recovery** - a killed content process triggers a reload; a failed load shows
   a banner with a Retry button instead of a black screen.
-- **Full-bleed chrome** - the system status bar is hidden, so the clock and
-  battery stop recolouring themselves against the site and it stops looking like
-  a page in a browser. Content still respects the safe area, so the site's own
-  header is never clipped by the notch.
+- **Edge to edge** - the web view runs under the top safe area. The site's
+  background layer is `position: fixed; inset: -18px` and its mobile header is
+  `position: fixed; top: 0` with `env(safe-area-inset-top)` padding, and both
+  anchor to the web view's viewport. Stopping the view at the safe area leaves a
+  strip of the app's own background across the top that the site's background
+  never reaches, which is what made a custom chat background look broken.
 
 ## Layout
 
 ```
 project.yml                       XcodeGen spec - the project's source of truth
 Shine/App/ShineApp.swift          @main entry point
-Shine/App/ContentView.swift       SwiftUI shell, error banner, hidden status bar
+Shine/App/ContentView.swift       SwiftUI shell, error banner, edge-to-edge layout
 Shine/App/ShineWebView.swift      the WKWebView and all its delegates
 Shine/App/Attachments.swift       camera, photo library and file picker
 Shine/App/Downloads.swift         download paths and the share sheet

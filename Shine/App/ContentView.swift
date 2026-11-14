@@ -7,6 +7,16 @@ struct ContentView: View {
     var body: some View {
         ZStack(alignment: .bottom) {
             ShineWebView(isRefreshing: $isRefreshing, loadError: $loadError)
+                // The web view must run under the top safe area. The site's
+                // background layer is `position: fixed; inset: -18px` and its
+                // mobile header is `position: fixed; top: 0` with
+                // `padding-top: env(safe-area-inset-top)`. Both anchor to the
+                // web view's viewport, so if the view stops at the safe area
+                // they start below the notch - leaving a strip of the app's own
+                // background across the top that the site's background never
+                // reaches. Full screen lets the site lay itself out edge to edge
+                // and pad itself below the notch.
+                .ignoresSafeArea()
                 .background(Color.black)
 
             if let loadError {
@@ -18,11 +28,6 @@ struct ContentView: View {
         }
         .background(Color.black)
         .animation(.easeInOut(duration: 0.2), value: loadError)
-        // The system status bar is the strip of clock, battery and signal at the
-        // top. It recolours itself against whatever the site is showing behind
-        // it, which is the tell that gives this away as a web page. Hiding it
-        // lets the site run edge to edge like a native app.
-        .statusBarHidden(true)
     }
 }
 

@@ -27,6 +27,9 @@ struct ShineWebView: UIViewRepresentable {
         config.defaultWebpagePreferences.allowsContentJavaScript = true
 
         let webView = WKWebView(frame: .zero, configuration: config)
+        // Black rather than the default white, so there is no flash of the wrong
+        // colour while the first page paints.
+        webView.backgroundColor = .black
         webView.navigationDelegate = context.coordinator
         webView.uiDelegate = context.coordinator
         webView.allowsBackForwardNavigationGestures = true
