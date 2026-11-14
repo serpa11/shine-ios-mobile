@@ -90,16 +90,18 @@ different host. Worth settling on one before shipping both.
 
 ## What the shell handles
 
-- **Attachments** - the site's file input is wired to a native document picker
-  via `runOpenPanelWith`. Without this the attachment chip is a dead button.
+- **Attachments** - WebKit presents its own upload panel for the site's file
+  input, offering Take Photo, Photo Library and Browse. No delegate is needed,
+  and `WKOpenPanelParameters` is iOS 18.4+ with no accept-type information, so
+  overriding it would buy nothing.
 - **Approvals** - the site uses `window.confirm` for its "Control PC" prompts.
   `WKWebView` drops those calls silently unless `runJavaScriptConfirmPanel...`
   is implemented, which would leave every approval hanging.
-- **Microphone and camera** - `requestMediaCapturePermissionForOrigin` grants
-  the site's `getUserMedia` calls, which is what makes Shine Live work. Without
-  it, `getUserMedia` is refused outright and the Info.plist usage strings alone
-  never produce a prompt. The camera is also offered as an attachment source,
-  alongside the photo library and a file browser.
+- **Microphone and camera** - `requestMediaCapturePermissionFor` grants the
+  site's `getUserMedia` calls, which is what makes Shine Live work. Without it,
+  `getUserMedia` is refused outright and the Info.plist usage strings alone
+  never produce a prompt. Attachments need no code: WebKit presents the system
+  upload panel, which offers Take Photo, Photo Library and Browse.
 - **Downloads** - the download button on each code block, and generated images,
   are saved to `Documents/Downloads` and offered to the share sheet.
 - **Links** - same-origin links load in place; anything else opens in Safari,
@@ -122,7 +124,6 @@ project.yml                       XcodeGen spec - the project's source of truth
 Shine/App/ShineApp.swift          @main entry point
 Shine/App/ContentView.swift       SwiftUI shell, error banner, edge-to-edge layout
 Shine/App/ShineWebView.swift      the WKWebView and all its delegates
-Shine/App/Attachments.swift       camera, photo library and file picker
 Shine/App/Downloads.swift         download paths and the share sheet
 Shine/Resources/                  icon, accent colour, launch screen
 scripts/make-icon.ps1             regenerates the 1024px icon
