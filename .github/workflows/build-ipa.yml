@@ -59,7 +59,7 @@ jobs:
 
           # Locate the bundle executable rather than hardcoding the path: the
           # .app name comes from the target and could change.
-          BIN=$(unzip -l Shine-unsigned.ipa | awk '/\.app\/[^/]+$/ {print $4; exit}')
+          BIN=$(unzip -Z1 Shine-unsigned.ipa | grep -E '^Payload/[^/]+\.app/[^/]+$' | head -1)
           if [ -z "$BIN" ]; then
             echo "Could not find a bundle executable in the IPA." >&2
             exit 1
