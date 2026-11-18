@@ -12,6 +12,37 @@ struct ShineWebView: UIViewRepresentable {
     @Binding var isRefreshing: Bool
     @Binding var loadError: String?
 
+    /// The site's viewport meta is `width=device-width, initial-scale=1.0`, with
+    /// no `viewport-fit=cover`. Without it WebKit lays the page out inside the
+    /// safe area and `env(safe-area-inset-*)` returns 0, so the site's own
+    /// safe-area padding does nothing and the chat background stops short of the
+    /// status bar and the home indicator - leaving black bands top and bottom.
+    /// Adding the declaration makes the page full-bleed, which is what the
+    /// site's CSS already assumes everywhere it calls env().
+    static let fullBleedScript = """
+    (function () {
+      var root = document.head || document.documentElement;
+      if (!root) { return; }
+
+      var viewport = document.querySelector('meta[name="viewport"]');
+      if (!viewport) {
+        viewport = document.createElement('meta');
+        viewport.setAttribute('name', 'viewport');
+        root.appendChild(viewport);
+      }
+      var content = viewport.getAttribute('content') || '';
+      if (content.indexOf('viewport-fit') === -1) {
+        viewport.setAttribute('content', (content ? content + ', ' : '') + 'viewport-fit=cover');
+      }
+
+      // The site pads its other surfaces with env() but not this one, so on a
+      // full-bleed page the header would sit under the notch.
+      var style = document.createElement('style');
+      style.textContent = '.app-header{padding-top:calc(20px + env(safe-area-inset-top, 0px)) !important;}';
+      root.appendChild(style);
+    })();
+    """
+
     func makeCoordinator() -> Coordinator {
         Coordinator(self)
     }
@@ -25,6 +56,9 @@ struct ShineWebView: UIViewRepresentable {
         config.allowsInlineMediaPlayback = true
         config.mediaTypesRequiringUserActionForPlayback = []
         config.defaultWebpagePreferences.allowsContentJavaScript = true
+        config.userContentController.addUserScript(
+            WKUserScript(source: fullBleedScript, injectionTime: .atDocumentStart, forMainFrameOnly: false)
+        )
 
         let webView = WKWebView(frame: .zero, configuration: config)
         // Black rather than the default white, so there is no flash of the wrong
@@ -33,7 +67,10 @@ struct ShineWebView: UIViewRepresentable {
         webView.navigationDelegate = context.coordinator
         webView.uiDelegate = context.coordinator
         webView.allowsBackForwardNavigationGestures = true
-        webView.scrollView.contentInsetAdjustmentBehavior = .automatic
+        // The site owns its safe-area padding through env(), so UIKit must not
+        // add its own. With .automatic the scroll content is inset by the safe
+        // area and the page's fixed background cannot reach the edges.
+        webView.scrollView.contentInsetAdjustmentBehavior = .never
 
         context.coordinator.attach(to: webView)
         webView.scrollView.refreshControl = context.coordinator.refreshControl

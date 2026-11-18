@@ -110,12 +110,12 @@ different host. Worth settling on one before shipping both.
   localStorage, kept by the default persistent `WKWebsiteDataStore`.
 - **Recovery** - a killed content process triggers a reload; a failed load shows
   a banner with a Retry button instead of a black screen.
-- **Edge to edge** - the web view runs under the top safe area. The site's
-  background layer is `position: fixed; inset: -18px` and its mobile header is
-  `position: fixed; top: 0` with `env(safe-area-inset-top)` padding, and both
-  anchor to the web view's viewport. Stopping the view at the safe area leaves a
-  strip of the app's own background across the top that the site's background
-  never reaches, which is what made a custom chat background look broken.
+- **Full bleed** - the site's viewport meta has no `viewport-fit=cover`, so
+  WebKit letterboxed the page inside the safe area and `env(safe-area-inset-*)`
+  returned 0, which left black bands across the top and bottom that the chat
+  background could not reach. A user script adds the declaration at document
+  start, and UIKit's automatic content inset adjustment is switched off so the
+  site's own `env()` padding is the single source of truth.
 
 ## Layout
 
