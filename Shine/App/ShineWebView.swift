@@ -57,7 +57,7 @@ struct ShineWebView: UIViewRepresentable {
         config.mediaTypesRequiringUserActionForPlayback = []
         config.defaultWebpagePreferences.allowsContentJavaScript = true
         config.userContentController.addUserScript(
-            WKUserScript(source: fullBleedScript, injectionTime: .atDocumentStart, forMainFrameOnly: false)
+            WKUserScript(source: Self.fullBleedScript, injectionTime: .atDocumentStart, forMainFrameOnly: false)
         )
 
         let webView = WKWebView(frame: .zero, configuration: config)
