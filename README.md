@@ -97,11 +97,14 @@ different host. Worth settling on one before shipping both.
 - **Approvals** - the site uses `window.confirm` for its "Control PC" prompts.
   `WKWebView` drops those calls silently unless `runJavaScriptConfirmPanel...`
   is implemented, which would leave every approval hanging.
-- **Microphone and camera** - `requestMediaCapturePermissionFor` grants the
+- **Microphone, camera, and photos** - `requestMediaCapturePermissionFor` grants the
   site's `getUserMedia` calls, which is what makes Shine Live work. Without it,
   `getUserMedia` is refused outright and the Info.plist usage strings alone
   never produce a prompt. Attachments need no code: WebKit presents the system
-  upload panel, which offers Take Photo, Photo Library and Browse.
+  upload panel, which offers Take Photo, Photo Library and Browse. The app
+  declares microphone, camera, photo-library read/add, and App Tracking
+  Transparency usage strings so iOS can show the corresponding permission prompts
+  when requested.
 - **Downloads** - the download button on each code block, and generated images,
   are saved to `Documents/Downloads` and offered to the share sheet.
 - **Links** - same-origin links load in place; anything else opens in Safari,

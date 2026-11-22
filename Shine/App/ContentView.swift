@@ -1,8 +1,10 @@
+import AppTrackingTransparency
 import SwiftUI
 
 struct ContentView: View {
     @State private var isRefreshing = false
     @State private var loadError: String?
+    @Environment(\.scenePhase) private var scenePhase
 
     var body: some View {
         ZStack(alignment: .bottom) {
@@ -28,6 +30,19 @@ struct ContentView: View {
         }
         .background(Color.black)
         .animation(.easeInOut(duration: 0.2), value: loadError)
+        .onChange(of: scenePhase) { phase in
+            if phase == .active {
+                requestTrackingPermission()
+            }
+        }
+    }
+
+    private func requestTrackingPermission() {
+        guard ATTrackingManager.trackingAuthorizationStatus == .notDetermined else { return }
+        // The prompt must be shown after the app is active, or iOS drops it.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+            ATTrackingManager.requestTrackingAuthorization { _ in }
+        }
     }
 }
 

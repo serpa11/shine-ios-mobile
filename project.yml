@@ -73,3 +73,7 @@ targets:
           Shine uses the camera so you can take a photo to attach to a message.
         NSPhotoLibraryUsageDescription: >-
           Shine needs access to your photos so you can attach one to a message.
+        NSPhotoLibraryAddUsageDescription: >-
+          Shine needs permission to save images or files to your photo library.
+        NSUserTrackingUsageDescription: >-
+          Shine uses this permission to measure app performance and improve your experience.
