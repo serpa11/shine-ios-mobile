@@ -9,16 +9,8 @@ struct ContentView: View {
     var body: some View {
         ZStack(alignment: .bottom) {
             ShineWebView(isRefreshing: $isRefreshing, loadError: $loadError)
-                // The web view must run under the top safe area. The site's
-                // background layer is `position: fixed; inset: -18px` and its
-                // mobile header is `position: fixed; top: 0` with
-                // `padding-top: env(safe-area-inset-top)`. Both anchor to the
-                // web view's viewport, so if the view stops at the safe area
-                // they start below the notch - leaving a strip of the app's own
-                // background across the top that the site's background never
-                // reaches. Full screen lets the site lay itself out edge to edge
-                // and pad itself below the notch.
-                .ignoresSafeArea()
+                // Keep the web view inside the safe area so the status bar gets
+                // clear breathing room and the site's header never slides under it.
                 .background(Color.black)
 
             if let loadError {

@@ -8,72 +8,9 @@ enum ShineConfig {
     static let origin = URL(string: "https://shineaimobile.pages.dev/")!
 }
 
-/// `env(safe-area-inset-*)` stays at 0 when `viewport-fit=cover` is injected at
-/// runtime instead of being served in the HTML, so the page never learns the
-/// real insets. This view reports them from the native side as they change.
-final class SafeAreaReportingWebView: WKWebView {
-    var onSafeAreaInsetsChange: ((UIEdgeInsets) -> Void)?
-
-    override func safeAreaInsetsDidChange() {
-        super.safeAreaInsetsDidChange()
-        onSafeAreaInsetsChange?(safeAreaInsets)
-    }
-}
-
 struct ShineWebView: UIViewRepresentable {
     @Binding var isRefreshing: Bool
     @Binding var loadError: String?
-
-    /// The site's viewport meta is `width=device-width, initial-scale=1.0`, with
-    /// no `viewport-fit=cover`. Without it WebKit lays the page out inside the
-    /// safe area, so the chat background stops short of the status bar and the
-    /// home indicator - leaving black bands top and bottom.
-    ///
-    /// Adding the declaration at runtime does make the page full bleed, but it
-    /// does not update `env(safe-area-inset-*)`, which stays 0. So the real
-    /// insets are handed over from the native side as `--sai-*` and the surfaces
-    /// that rely on `env()` are repointed at those variables. The env() value is
-    /// kept as a fallback, so this stays correct if the site ever serves the
-    /// declaration itself.
-    static let safeAreaStyles = [
-        ".app-header{padding-top:calc(20px + var(--sai-t, env(safe-area-inset-top, 0px))) !important;}",
-        ".mobile-chat-header{height:calc(62px + var(--sai-t, env(safe-area-inset-top, 0px))) !important;",
-        "padding-top:var(--sai-t, env(safe-area-inset-top, 0px)) !important;}",
-        ".welcome{padding-top:calc(18px + var(--sai-t, env(safe-area-inset-top, 0px))) !important;",
-        "padding-bottom:calc(24px + var(--sai-b, env(safe-area-inset-bottom, 0px))) !important;}",
-        ".conversation{padding-top:calc(78px + var(--sai-t, env(safe-area-inset-top, 0px))) !important;",
-        "padding-bottom:calc(110px + var(--sai-b, env(safe-area-inset-bottom, 0px))) !important;}",
-        "#recentWindow{padding-top:calc(18px + var(--sai-t, env(safe-area-inset-top, 0px))) !important;",
-        "padding-bottom:calc(24px + var(--sai-b, env(safe-area-inset-bottom, 0px))) !important;}",
-        "#settingsWindow,#shineIntelligenceWindow{",
-        "padding-top:max(18px, var(--sai-t, env(safe-area-inset-top, 0px))) !important;",
-        "padding-bottom:max(28px, var(--sai-b, env(safe-area-inset-bottom, 0px))) !important;}",
-        ".overlay-window{padding-bottom:calc(28px + var(--sai-b, env(safe-area-inset-bottom, 0px))) !important;}",
-        ".shell > main:has(> #conversation.show){",
-        "padding-top:calc(8px + var(--sai-t, env(safe-area-inset-top, 0px))) !important;}",
-    ].joined(separator: "\n")
-
-    static let fullBleedScript = """
-    (function () {
-      var root = document.head || document.documentElement;
-      if (!root) { return; }
-
-      var viewport = document.querySelector('meta[name="viewport"]');
-      if (!viewport) {
-        viewport = document.createElement('meta');
-        viewport.setAttribute('name', 'viewport');
-        root.appendChild(viewport);
-      }
-      var content = viewport.getAttribute('content') || '';
-      if (content.indexOf('viewport-fit') === -1) {
-        viewport.setAttribute('content', (content ? content + ', ' : '') + 'viewport-fit=cover');
-      }
-
-      var style = document.createElement('style');
-      style.textContent = `\(safeAreaStyles)`;
-      root.appendChild(style);
-    })();
-    """
 
     func makeCoordinator() -> Coordinator {
         Coordinator(self)
@@ -88,39 +25,13 @@ struct ShineWebView: UIViewRepresentable {
         config.allowsInlineMediaPlayback = true
         config.mediaTypesRequiringUserActionForPlayback = []
         config.defaultWebpagePreferences.allowsContentJavaScript = true
-        config.userContentController.addUserScript(
-            WKUserScript(source: Self.fullBleedScript, injectionTime: .atDocumentStart, forMainFrameOnly: false)
-        )
-
-        let webView = SafeAreaReportingWebView(frame: .zero, configuration: config)
-        // Hand the real insets to the page as CSS variables. Done here rather
-        // than in env() because a runtime viewport-fit declaration does not
-        // update the environment values.
-        webView.onSafeAreaInsetsChange = { [weak webView] insets in
-            guard let webView else { return }
-            webView.evaluateJavaScript(
-                """
-                (function () {
-                  var e = document.documentElement;
-                  if (!e) { return; }
-                  e.style.setProperty('--sai-t', '\(insets.top)px');
-                  e.style.setProperty('--sai-b', '\(insets.bottom)px');
-                  e.style.setProperty('--sai-l', '\(insets.left)px');
-                  e.style.setProperty('--sai-r', '\(insets.right)px');
-                })();
-                """
-            )
-        }
+        let webView = WKWebView(frame: .zero, configuration: config)
         // Black rather than the default white, so there is no flash of the wrong
         // colour while the first page paints.
         webView.backgroundColor = .black
         webView.navigationDelegate = context.coordinator
         webView.uiDelegate = context.coordinator
         webView.allowsBackForwardNavigationGestures = true
-        // The site owns its safe-area padding through env(), so UIKit must not
-        // add its own. With .automatic the scroll content is inset by the safe
-        // area and the page's fixed background cannot reach the edges.
-        webView.scrollView.contentInsetAdjustmentBehavior = .never
 
         context.coordinator.attach(to: webView)
         webView.scrollView.refreshControl = context.coordinator.refreshControl
@@ -191,11 +102,6 @@ struct ShineWebView: UIViewRepresentable {
         func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
             parent.loadError = nil
             finishRefresh()
-            // Safety net in case safeAreaInsetsDidChange fired before the page
-            // existed to receive the values.
-            if let reporting = webView as? SafeAreaReportingWebView {
-                reporting.onSafeAreaInsetsChange?(reporting.safeAreaInsets)
-            }
         }
 
         func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {

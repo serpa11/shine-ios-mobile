@@ -10,8 +10,8 @@ options:
 settings:
   base:
     SWIFT_VERSION: "5.9"
-    MARKETING_VERSION: "1.0.0"
-    CURRENT_PROJECT_VERSION: "1"
+    MARKETING_VERSION: "1.0.2"
+    CURRENT_PROJECT_VERSION: "2"
     CODE_SIGN_STYLE: Automatic
     # The site is plain HTTPS, so no App Transport Security exception is needed
     # and none is declared. Shine talks to its providers straight from the
@@ -30,8 +30,8 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.shine.mobile
         PRODUCT_NAME: Shine
-        MARKETING_VERSION: "1.0.0"
-        CURRENT_PROJECT_VERSION: "1"
+        MARKETING_VERSION: "1.0.2"
+        CURRENT_PROJECT_VERSION: "2"
         TARGETED_DEVICE_FAMILY: "1,2"
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
@@ -50,11 +50,9 @@ targets:
         UILaunchStoryboardName: LaunchScreen
         ITSAppUsesNonExemptEncryption: false
         UIApplicationSupportsIndirectInputEvents: true
-        # The status bar is drawn over the web content, which runs edge to edge,
-        # so it has no background of its own and the site's chat background shows
-        # straight through it. Nothing hides it. The style follows the system
-        # appearance so the clock and battery stay legible over both the dark
-        # and the light background.
+        # The web view stays inside the safe area so the status bar has clear
+        # breathing room above the site content. The style follows the system
+        # appearance so the clock and battery stay legible.
         UIStatusBarStyle: UIStatusBarStyleDefault
         UIViewControllerBasedStatusBarAppearance: false
         UISupportedInterfaceOrientations:
